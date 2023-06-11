@@ -11,9 +11,8 @@ from time import perf_counter_ns
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view='/login'
-print(current_user)
 
-# ----------------------MAIL------------------------------------------------------------------------
+# ----------------------MAIL--------------------------------------#
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -34,12 +33,11 @@ def send_mail(receiver="yashsrivastava0211@gmail.com", message="Hi this is body 
     s.login(SENDER_ADDRESS, SENDER_PASSWORD)
     s.send_message(msg)
     s.quit()
-    print("LINE39 EMAIL SENT")
-# --------------------------------------------------------------------------------------------------
+    print("EMAIL SENT")
+# ---------------------------MAIL END-------------------------------------#
 
 @login_manager.user_loader
 def load_user(id):
-    print("LINe41", id)
     u= user.query.get(int(id))
     return u
 
@@ -50,7 +48,6 @@ def dashboard():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method=="GET":
-        print("LINE52")
         if current_user.is_active:
             return redirect("/home")
         return render_template('login.html')
@@ -75,9 +72,7 @@ def logout():
 
 @app.route('/create_user', methods=['GET', 'POST'])
 def create_user():
-    from models import user 
     if request.method=="GET":
-        print("LINE78")
         return render_template("create_user.html")
     else:
         data = json.loads(request.data)
@@ -99,21 +94,15 @@ def create_user():
 @app.route('/home', methods=["GET", "POST"])
 @login_required
 def home():
-    from models import post, follower
-    print("104, current_user is:  ", current_user)
     if request.method == "GET":
-        print("106")
         if not current_user.is_active:
-            print("108")
             return redirect("/login")
         return render_template("home.html")
     data = json.loads(request.data)
     username = data.get("username", None)
     start= perf_counter_ns()
     posts= get_home_posts(username)
-    print(posts)
     stop= perf_counter_ns()
-    print("TIME TAKEN= ",stop-start)
     dict= {"posts":[]}
     
     for post in posts[-1::-1]:
@@ -134,7 +123,6 @@ def home():
 def getComments():
     data = json.loads(request.data)
     postid = data.get("id", None)
-    # comms= comment.query.filter_by(post=postid).all()
     comms= get_Comments(postid)
     dict={"comments":[]}
     for comm in comms:
@@ -168,7 +156,6 @@ def search():
     if request.method == "GET":
         return render_template("search.html")
     else:
-        from models import user
         data = json.loads(request.data)
         name = data.get("username", None)
         users= search_dao(name)
@@ -181,12 +168,12 @@ def search():
 @login_required
 def userinfo(name):
     if request.method == "GET":
+        if get_user(name) is None:
+            return redirect("/home")
         return  render_template("users.html")
     else:
-        from models import user, follower, post
         data = json.loads(request.data)
         name = data.get("username", None)
-
         e= get_user(name)
         if e is None:
             return {"err": "User not Found"}
@@ -233,7 +220,6 @@ def upload():
     if request.method=="GET":
         return render_template("upload.html")
     else:
-        from models import post
         last_post = post.query.order_by(post.id.desc()).first()
         username= current_user.username
         filename= ""
@@ -257,11 +243,11 @@ def myaccount():
 @app.route('/editpost/<postid>', methods=["GET", "POST"])
 @login_required
 def editpost(postid):
-    from models import post
     if request.method=="GET":
+        if get_post(postid) is None:
+            return redirect("/myaccount")
         return render_template("editpost.html")
     else:
-        print("LINE246")
         file = request.files["file"]
         title = request.form["title"]
         caption = request.form["caption"]

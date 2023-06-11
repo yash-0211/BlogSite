@@ -16,7 +16,7 @@ SENDER_ADDRESS = 'team@bloglite.com'
 SENDER_PASSWORD = ''
 
 
-print("tasks.Py Line 18")
+print("tasks.py executing..")
 
 celery= Celery("My task",  broker="redis://localhost:6379/1" , result_backend="redis://localhost:6379/2")
 celery.conf.timezone = 'Asia/Kolkata'
@@ -25,7 +25,7 @@ from celery.schedules import crontab
 
 @celery.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
-    print("Tasks.py Line 22")
+    print("Adding periodic tasts")
     sender.add_periodic_task(
             crontab(hour=19, minute=45),
             daily_reminder.s(),
@@ -38,13 +38,10 @@ def setup_periodic_tasks(sender, **kwargs):
 
 @celery.task
 def daily_reminder():
-    print("[[[[[[--------------------------IN DAILY REMINDER-----------------------]]]]]]")
-    # from datetime import date
-
+    print("Sending Daily reminder..")
     from models import user, post
     allusers = user.query.all()
     today = str(date.today())
-    print("TODAY=", today)
     for user in allusers:
         last_post = post.query.order_by(post.id.desc()).first()
         # print(last_post.datetime[:11])
@@ -60,17 +57,17 @@ def daily_reminder():
             s.login(SENDER_ADDRESS, SENDER_PASSWORD)
             s.send_message(msg)
             s.quit()
+    print("Daily reminder sent ..")
 
 
-def prevMonth(s): #   s="2023-03-24 10:12"
+def prevMonth(s): # s="2023-03-24 10:12"
     today = str(date.today())
-    print("-----------------------------------------------")
-    print(s[:7],  today[:7])
     return s[:7]== today[:7]
 
 @celery.task
 def monthly_report():
     from models import user, post, comment, follower
+    print("Making monthly report..")
     x = datetime.now()
     year = x.year
     month = x.month  
@@ -108,7 +105,6 @@ def monthly_report():
                                   followings=followings, 
                                   month= date.today().strftime("%B")
                                   )
-        
         msg = MIMEMultipart()
         msg['Subject'] = "Monthly Report"
         msg['From'] = SENDER_ADDRESS
@@ -120,6 +116,8 @@ def monthly_report():
         s.login(SENDER_ADDRESS, SENDER_PASSWORD)
         s.send_message(msg)
         s.quit()
+    print("Monthly report sent..")
+
 
 
 

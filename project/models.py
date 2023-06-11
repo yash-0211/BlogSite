@@ -57,5 +57,4 @@ class comment(db.Model):
     datetime= db.Column(db.String,nullable=False)
 
 
-
-print("Fine")
+print("models.py executed")

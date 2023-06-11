@@ -182,7 +182,6 @@ var feedComponent = Vue.component('feed-component', {
             contents: [],
             username:"",
         }},
-   
 
     mounted: async function () {
         var elements = document.cookie.split('=');
@@ -204,9 +203,9 @@ var feedComponent = Vue.component('feed-component', {
 })
 
 var postComponent = Vue.component('post-component', {
-    template:`<div class="card" style="background-color:white;">
-    <div class="d-flex" style="margin: 10px;">
-        <div>
+    template:`<div class="card shadow" style="background-color:white;">
+    <div class="d-flex " style="margin: 10px; ">
+        <div >
             <a type="button" class="btn btn-success btn-sm" v-if="username==content.author" :href="'/editpost/'+content.id" >Edit</a>
             <a type="button" class="btn btn-danger btn-sm" v-if="username==content.author" :href="'/deletepost/'+content.id" >Delete</a> <br>
             <a class="text-muted mb-0" :href="'/users/'+ content.author" style="text-decoration: none; color:black;">Author: <i>{{content.author}}</i></a>
@@ -586,7 +585,6 @@ var editpostComponent = Vue.component('editpost-component', {
         </section>
     </div>
 </div>`,
-    // props:[post, username],
     data: function () {
         return {
             current_user:"",
@@ -599,9 +597,6 @@ var editpostComponent = Vue.component('editpost-component', {
 
         }},
     mounted: async function(){
-        // if (this.post== null){
-        //     window.history.back()
-        // }
         var elements = document.cookie.split('=');
         this.current_user= elements[1]
 

@@ -109,6 +109,8 @@ def delete_post(postid, username):
 @cache.memoize(10)
 def get_post(postid):
     post_obj = post.query.filter_by(id=postid).first()
+    if post_obj is None: 
+        return None
     return post_obj.author , post_obj.title , post_obj.caption
 
 def change_data(username, newname):
