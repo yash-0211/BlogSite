@@ -14,7 +14,7 @@ In the terminals, run the following commands:
 * Run `celery -A tasks.celery beat --max-interval 1 -l info` to start the celery beat on 2nd terminal.
 * Run `celery -A tasks.celery worker -l info` to start the celery workers on 3rd terminal.
 * Run `~/go/bin/MailHog` to connect to MailHog server on 4th terminal.
-* Run  `main.py` on 5th terminal.
+* Run  `python3 main.py` on 5th terminal.
 =======
    * Run ` virtualenv projectenv` on any of the opened terminals
    * Run `. projectenv/bin/activate`on all the opened terminals

@@ -78,6 +78,7 @@ var signupComponent = Vue.component('signup-component', {
                 <input type="password" name="password" id="form2Example11" class="form-control"
                     placeholder="Re-enter Password" v-model="password2" v-on:click="err=false;" autocomplete="off"/>
             </div>
+            
             <p v-if="err" class="text-danger">Passwords do not match</p>
             <p v-if="already !='' " class="text-danger">The {{already}} entered is already registered with us.</p>            
             <div class="text-center pt-1 mb-5 pb-1">
@@ -310,6 +311,16 @@ var usersComponent = Vue.component('users-component', {
     template:`<div class="container py-4 py-xl-5">
     <div class="row justify-content-md-center">
     <div class="col-10">
+        <div v-if="ispic">
+            <img class="card-img-top w-100 d-block" style="max-width:100px; height:auto; border-radius:100%;"
+                :src="'../static/img/propics/'+userid+'.jpg'" alt="">
+        </div>
+        <div v-else>
+            <img class="card-img-top w-100 d-block" style="max-width:100px; height:auto; border-radius:100%; " 
+                :src="'../static/img/placeholder_propic.png'" alt="">
+        </div>
+        <div>
+
         <div class="row mb-5">
             <h2>{{username}}</h2>
             <div class=" pt-1 pb-1">
@@ -356,7 +367,9 @@ var usersComponent = Vue.component('users-component', {
             following:[],
             contents:[],
             current_user:"",
-            isfollow:true
+            isfollow:true,
+            ispic: false,
+            userid:""
         }},
     methods:{
         follow:async function(){
@@ -407,14 +420,14 @@ var usersComponent = Vue.component('users-component', {
             // Do something for error
             console.log("Error");
             window.location.href= "/home"
-
         }
         else{
             console.log(data)
             this.followers= data.followers //username
             this.following= data.followings
             this.contents= data.posts
-
+            this.userid= data.userid
+            this.ispic= data.ispic
         }
         var elements = document.cookie.split('=');
         this.current_user= elements[1]
@@ -485,12 +498,41 @@ var searchComponent = Vue.component('search-component', {
         }}
 })
 
-
 var myaccountComponent = Vue.component('myaccount-component', {
     template:`<div class="container py-4 py-xl-5">
     <div class="row justify-content-md-center">
     <div class="col-10">
-    <div class="row mb-5">
+        <img v-if="ispic" class="card-img-top w-100 d-block" id="profile_pic" data-bs-toggle="modal" data-bs-target="#exampleModalCenter" title="Change Profile Photo" style="max-width:100px; height:auto; border-radius:100%; "
+            :src="'../static/img/propics/'+userid+'.jpg'" alt="">
+        <img v-else class="card-img-top w-100 d-block" id="profile_pic"  data-bs-toggle="modal" data-bs-target="#exampleModalCenter" title="Add a Profile Photo" style="max-width:100px; height:auto; border-radius:100%; " 
+            :src="'../static/img/placeholder_propic.png'" alt="">
+    
+    <form method="POST" id="form_pro_pic" action="upload_profile_pic" enctype="multipart/form-data">
+    <input type="file" accept="image/jpeg,image/jpg,image/png" id="my_file" name="profile_pic">
+    </form>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Profile Picture</h5>
+          </div>
+          <div class="modal-body">
+            <div class="list-group">
+                <div class="list-group-item list-group-item-action change_pic" id="change_pro_pic"> Upload Picture </div>
+                <form method="POST" id="delete_pic_form" action="delete_pro_pic" enctype="multipart/form-data">
+                </form>
+                <div class="list-group-item list-group-item-action remove_pic" id="remove_pic_id" v-if="ispic" onclick="remove_pc()"> Remove Picture </div>
+                <div class="list-group-item list-group-item-action cancel" data-bs-dismiss="modal"> Cancel</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div>
         <h2>{{current_user}}</h2>
         <div class=" pt-1 pb-1">
             <a type="button" class="btn btn-warning" href="/editprofile">Edit Profile</a>
@@ -534,6 +576,8 @@ var myaccountComponent = Vue.component('myaccount-component', {
             followers: [],
             following:[],
             contents:[],
+            ispic: false,
+            userid: ""
         }},
     mounted: async function(){
         var elements = document.cookie.split('=');
@@ -557,6 +601,9 @@ var myaccountComponent = Vue.component('myaccount-component', {
             this.followers= data.followers 
             this.following= data.followings
             this.contents= data.posts
+            this.userid= data.userid
+            this.ispic= data.ispic
+            console.log(this.ispic)
         }
     }
 })

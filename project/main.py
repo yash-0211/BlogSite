@@ -182,7 +182,6 @@ def userinfo(name):
         followings= get_followings(name)
         posts= get_posts(name)
         stop= perf_counter_ns()
-        print("TIME TAKEN= ", stop-start)
         dict= {"posts":[]}
         for post in posts[-1::-1]:
             obj= {}
@@ -197,7 +196,10 @@ def userinfo(name):
             dict["posts"].append(obj)
         dict["followers"]= followers
         dict["followings"]= followings
+        dict["userid"]= e.id
         dict["err"]= ""
+        ispic= os.path.exists(f"static/img/propics/{e.id}.jpg")
+        dict["ispic"]=  ispic
         return dict
 
 @app.route('/follow', methods=["POST"])
@@ -258,6 +260,7 @@ def editpost(postid):
 
         edit_post(postid,title,caption)
         return redirect("/myaccount")
+        
 @app.route('/deletepost/<postid>', methods=["POST", "GET"])
 @login_required
 def deletepost(postid):
@@ -338,4 +341,24 @@ def editProfile():
             db.session.commit()
             logout()
         return {"err": False}
-app.run()
+
+@app.route('/upload_profile_pic', methods=["POST"])
+@login_required
+def upload_profile_pic():
+    print("upload_profile_pic Function Reached !")
+    file = request.files['profile_pic']
+    id= str(current_user.id)
+    p= "./static/img/propics/"+ id +".jpg"
+    file.save(os.path.join(p))
+    return redirect("/myaccount")
+
+@app.route('/delete_pro_pic', methods=["POST"])
+@login_required
+def delete_pro_pic():
+    print("delete_pro_pic Function Reached !")
+    id= str(current_user.id)
+    p= "./static/img/propics/"+ id +".jpg"
+    os.remove(p)
+    return redirect("/myaccount")
+ 
+app.run(port=3000)
