@@ -105,6 +105,9 @@ def delete_post(postid, username):
         post.query.filter_by(id=postid).delete()
         db.session.delete(post_obj)
         db.session.commit()
+        return True
+    else:
+        return None
 
 @cache.memoize(10)
 def get_post(postid):

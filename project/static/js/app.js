@@ -174,10 +174,11 @@ var feedComponent = Vue.component('feed-component', {
     </div>
     <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-1">
         <div class="col" v-for="content in contents" >
-        <post-component :content="content" :username="username"></post-component>
+        <post-component :content="content" :username="username" :userid="content.userid"" :ispic="content.ispic" ></post-component>
         </div>
     </div>
 </div></div></div>`,
+// :ispic="ispic" :userid="userid" 
     data: function () {
         return {
             contents: [],
@@ -205,11 +206,43 @@ var feedComponent = Vue.component('feed-component', {
 
 var postComponent = Vue.component('post-component', {
     template:`<div class="card shadow" style="background-color:white;">
-    <div class="d-flex " style="margin: 10px; ">
-        <div >
-            <a type="button" class="btn btn-success btn-sm" v-if="username==content.author" :href="'/editpost/'+content.id" >Edit</a>
-            <a type="button" class="btn btn-danger btn-sm" v-if="username==content.author" :href="'/deletepost/'+content.id" >Delete</a> <br>
-            <a class="text-muted mb-0" :href="'/users/'+ content.author" style="text-decoration: none; color:black;">Author: <i>{{content.author}}</i></a>
+    <div class="d-flex "style="margin: 10px;">
+        <div>
+            <a class="text-muted mb-0" type="button"  v-if="username==content.author"    :href="'/editpost/'+content.id" style=" margin-right: 10px;">Edit</a> 
+             
+            <a type="button" class="text-muted mb-0" v-if="username==content.author"   data-bs-toggle="modal" data-bs-target="#exampleModal" >Delete</a> <br>
+
+            
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">{{ content.title }}</h5>
+                    
+                  </div>
+                  <div class="modal-body">
+                    Are you sure you want to delete this post?
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a type="button" class="btn btn-danger" :href="'/deletepost/'+content.id" >Delete Post</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
+
+
+
+
+            <img  v-if="ispic" style="max-width:30px; height:auto; border-radius:100%;" :src="'../static/img/propics/'+userid+'.jpg'" alt="">
+            <img  v-else style="max-width:30px; height:auto; border-radius:100%;" src="../static/img/placeholder_propic.png" alt="">
+            <span>
+            <a class=" mb-0" :href="'/users/'+ content.author" style="display:inline-block;text-decoration: none; color:black; font-size:20px"> <b>{{content.author}}</b></a>
+            </span> 
             <p class="text-muted mb-0">{{ content.datetime }}</p> 
         </div>
     </div>
@@ -231,7 +264,9 @@ var postComponent = Vue.component('post-component', {
     <div class="d-flex" >
         <div v-if="content.showComm">
             <div v-for="comment in content.comments"style="margin: 10px; margin-bottom:15px">
-                <p style="margin-bottom:0px; padding:0px;"><a style="text-decoration:none; color:black; font-weight:bold;" :href="'/users/'+ comment.author">{{comment.author}}</a >: {{comment.caption}}</p>
+                <img  v-if="comment.ispic" style="max-width:30px; height:auto; border-radius:100%;" :src="'../static/img/propics/'+comment.userid+'.jpg'" alt="">
+                <img  v-else style="max-width:30px; height:auto; border-radius:100%;" src="../static/img/placeholder_propic.png" alt="">
+                <span style="margin-bottom:0px; padding:0px;"><a style="text-decoration:none; color:black; font-weight:bold;" :href="'/users/'+ comment.author">{{comment.author}}</a >: {{comment.caption}}</span>
                 <p v-if="username==comment.author" style="margin: 0px; padding:0px;">
                     <small class="link-secondary" v-on:click="deleteComment(comment.id, content)">delete</small>
                 </p>
@@ -239,7 +274,7 @@ var postComponent = Vue.component('post-component', {
         </div>
     </div>
 </div>`,
-props:['content','username'],
+props:['content','username', 'ispic', 'userid'],
 data: function () {
     return {
         id:"", 
@@ -269,6 +304,9 @@ methods:{
     },
     addComment: async function(content){
         console.log("Post id is ", content)
+        console.log("This.username = ",  content)
+        // Above I am able tp write content instead of this.content
+        // But for other props(username, ispic, userid) I must use the this keyword otherwise get an erroe
         caption= document.getElementById('commentBox').value
         if (caption==""){
             return null
@@ -319,7 +357,7 @@ var usersComponent = Vue.component('users-component', {
             <img class="card-img-top w-100 d-block" style="max-width:100px; height:auto; border-radius:100%; " 
                 :src="'../static/img/placeholder_propic.png'" alt="">
         </div>
-        <div>
+       
 
         <div class="row mb-5">
             <h2>{{username}}</h2>
@@ -356,7 +394,7 @@ var usersComponent = Vue.component('users-component', {
             </div>
 
             <div v-for="content in contents" style="margin-top:30px;">
-                <post-component :content="content" :username="current_user"></post-component>
+                <post-component :content="content" :username="current_user" :ispic="ispic" :userid="userid" ></post-component>
             </div>
         
     </div></div></div>`,
@@ -423,7 +461,7 @@ var usersComponent = Vue.component('users-component', {
         }
         else{
             console.log(data)
-            this.followers= data.followers //username
+            this.followers= data.followers
             this.following= data.followings
             this.contents= data.posts
             this.userid= data.userid
@@ -564,9 +602,8 @@ var myaccountComponent = Vue.component('myaccount-component', {
         <div class="col-md-8 col-xl-6 text-center mx-auto" v-if="contents.length==0">
             <h4>No posts</h4>
         </div>
-
         <div v-for="content in contents" style="margin-top:30px;">
-            <post-component :content="content" :username="current_user"></post-component>
+            <post-component :content="content" :username="current_user" :ispic="ispic" :userid="userid" ></post-component>
         </div>
     
 </div></div></div>`,
@@ -596,14 +633,15 @@ var myaccountComponent = Vue.component('myaccount-component', {
         if (data.err !=""){
             // Do something for error
             console.log("Error");
+            // windows.href= "/home"
         }
-        else{
-            this.followers= data.followers 
-            this.following= data.followings
-            this.contents= data.posts
-            this.userid= data.userid
-            this.ispic= data.ispic
-            console.log(this.ispic)
+        else {
+        this.followers= data.followers 
+        this.following= data.followings
+        this.contents= data.posts
+        this.userid= data.userid
+        this.ispic= data.ispic
+        console.log(this.contents, this.contents.length)
         }
     }
 })

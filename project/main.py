@@ -104,10 +104,10 @@ def home():
     posts= get_home_posts(username)
     stop= perf_counter_ns()
     dict= {"posts":[]}
-    
     for post in posts[-1::-1]:
         obj= {}
         obj["author"]= post.author
+        print(post.author)
         obj["title"]= post.title
         obj["caption"]= post.caption
         obj["datetime"]= post.datetime
@@ -115,7 +115,9 @@ def home():
         obj["showComm"]= False
         obj["comments"]=[]
         obj["showCommentForm"]=False
-        
+        id= user.query.filter_by(username=post.author).first().id
+        obj["userid"]= id
+        obj["ispic"]= os.path.exists(f"static/img/propics/{id}.jpg")
         dict["posts"].append(obj)
     return dict
 
@@ -130,6 +132,10 @@ def getComments():
         obj["id"]= comm.id
         obj["author"]=comm.author
         obj["caption"]=comm.caption
+        id= user.query.filter_by(username=comm.author).first().id
+        obj["userid"]= id
+        obj["ispic"]= os.path.exists(f"static/img/propics/{id}.jpg")
+
         dict["comments"].append(obj)
     return dict
 
@@ -137,10 +143,13 @@ def getComments():
 def addComment():
     data = json.loads(request.data)
     postid = data.get("postid", None)
-    username= data.get("username", None)
+    username= current_user.username
     caption= data.get("caption", None)
     comm_id= add_Comment(username, postid, caption)
-    dict={"comment":{"author":username, "caption": caption, "id":comm_id}}
+    id= user.query.filter_by(username=username).first().id
+    ispic= os.path.exists(f"static/img/propics/{id}.jpg")
+    dict={"comment":{ "id":comm_id, "author":username, "caption": caption, "userid":"", "ispic": False,
+                     "userid": id, "ispic": ispic}}
     return dict
 
 @app.route('/deleteComment', methods=["POST"])
@@ -235,7 +244,7 @@ def upload():
         p= "./static/img/posts/"+ filename+".jpg"
         file.save(os.path.join(p))
         upload_post(username,filename,content,title)
-        return redirect("/home")
+        return redirect("/myaccount")
 
 @app.route('/myaccount', methods=["GET", "POST"])
 @login_required
@@ -264,8 +273,12 @@ def editpost(postid):
 @app.route('/deletepost/<postid>', methods=["POST", "GET"])
 @login_required
 def deletepost(postid):
-    delete_post(postid,current_user.username)
-    return redirect("/myaccount")       
+    result = delete_post(postid,current_user.username)
+    if result: 
+        return redirect("/myaccount")
+    else:
+        # Change this and display the message "This post cannot be deleted by you" 
+        return redirect("/myaccount")
 
 
 @app.route('/getpost', methods=["POST"])
