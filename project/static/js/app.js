@@ -177,12 +177,15 @@ var feedComponent = Vue.component('feed-component', {
         <post-component :content="content" :username="username" :userid="content.userid"" :ispic="content.ispic" ></post-component>
         </div>
     </div>
+    <button type="button" class="btn btn-primary" style="margin:20px" v-on:click="LoadMorePosts()" >Show more Posts</button>
+    <p style="color:red; margin:20px;" v-if="NoMorePosts" > No More Posts left to Read</p>
 </div></div></div>`,
 // :ispic="ispic" :userid="userid" 
     data: function () {
         return {
             contents: [],
             username:"",
+            NoMorePosts:false
         }},
 
     mounted: async function () {
@@ -201,7 +204,28 @@ var feedComponent = Vue.component('feed-component', {
         var data = await response.json();
         console.log(data)
         this.contents= data.posts
+        this.more= data.more;
     },
+    methods:{
+        LoadMorePosts: async function(){
+            var response = await fetch('/LoadMorePosts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    length: this.contents.length,
+                })
+            });
+            var data= await response.json();  
+            var arr= data.posts;
+            if (arr.length==0){
+                this.NoMorePosts= true;
+            }
+            this.contents= this.contents.concat(arr);
+        }
+
+    } 
 })
 
 var postComponent = Vue.component('post-component', {

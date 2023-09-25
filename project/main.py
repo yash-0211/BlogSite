@@ -104,7 +104,9 @@ def home():
     posts= get_home_posts(username)
     stop= perf_counter_ns()
     dict= {"posts":[]}
-    for post in posts[-1::-1]:
+    posts=  posts[-1::-1]
+    dict["more"]= len(posts)>5
+    for post in posts[:5]:
         obj= {}
         obj["author"]= post.author
         print(post.author)
@@ -120,6 +122,39 @@ def home():
         obj["ispic"]= os.path.exists(f"static/img/propics/{id}.jpg")
         dict["posts"].append(obj)
     return dict
+
+@app.route('/LoadMorePosts', methods=[ "POST"])
+@login_required
+def LoadMorePosts():
+    if request.method == "GET":
+            return redirect("/home")
+    username= current_user.username
+    data = json.loads(request.data)
+    length = data.get("length")
+    posts= get_home_posts(username)
+    posts=  posts[-1::-1]
+    if len(posts)< length+5:
+        posts=  posts[length-1:length+5]
+    else:
+        posts= posts[length-1:]
+    dict= {"posts": []}
+    print(posts)
+    for post in posts:
+        obj= {}
+        obj["author"]= post.author
+        obj["title"]= post.title
+        obj["caption"]= post.caption
+        obj["datetime"]= post.datetime
+        obj["id"]= post.id
+        obj["showComm"]= False
+        obj["comments"]=[]
+        obj["showCommentForm"]=False
+        id= user.query.filter_by(username=post.author).first().id
+        obj["userid"]= id
+        obj["ispic"]= os.path.exists(f"static/img/propics/{id}.jpg")
+        dict["posts"].append(obj)
+    return dict
+
 
 @app.route('/getComments', methods=["POST"])
 def getComments():
