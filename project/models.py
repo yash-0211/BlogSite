@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.sqlite3'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog2.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
 app.config['SECRET_KEY']='secret'
 
@@ -29,7 +29,6 @@ class user(db.Model, UserMixin):
     email= db.Column(db.String,nullable=True)
     password=db.Column(db.String,nullable=False)
 
-
 class post(db.Model):
     __tablename__= "post"
     id= db.Column(db.Integer,primary_key=True,autoincrement=True)
@@ -47,7 +46,6 @@ class follower(db.Model):
     following= db.Column(db.String, db.ForeignKey("user.username"), nullable=False)
     datetime= db.Column(db.String,nullable=False)
 
-
 class comment(db.Model):
     __tablename__ = 'comment'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -56,5 +54,10 @@ class comment(db.Model):
     caption = db.Column(db.String, nullable=False)
     datetime= db.Column(db.String,nullable=False)
 
+class like(db.Model):
+    __tablename__ = 'like'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    author = db.Column(db.String,db.ForeignKey("user.username"), nullable=False)
+    post = db.Column(db.Integer,db.ForeignKey("post.id"), nullable=False)
 
 print("models.py executed")

@@ -12,7 +12,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view='/login'
 
-# ----------------------MAIL--------------------------------------#
+# ----------------------MAIL--------------------------------------------#
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -22,6 +22,7 @@ SERVER_SMTP_PORT = 1025
 SENDER_ADDRESS = 'team@bloglite.com'
 SENDER_PASSWORD = ''
 
+# function to send email to user
 def send_mail(receiver="yashsrivastava0211@gmail.com", message="Hi this is body of mail", subject= "From BlogSite"):
     msg = MIMEMultipart()
     msg['Subject'] = subject
@@ -44,6 +45,13 @@ def load_user(id):
 @app.route('/', methods=["GET", "POST"])
 def dashboard():
     return redirect("/home")
+
+@app.route('/getname', methods=["GET", "POST"])
+def getname():
+    if current_user.is_active:
+        return {"username": current_user.username}
+    else:
+        return {"username": ""}
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -83,13 +91,11 @@ def create_user():
         message= alreadyExist(username,email)
         if message:
             return {"message":message}
-
         u_obj= create_user_dao(username, email, password)
         login_user(u_obj)
         welcomeMsg= "Hello! Welcome to the BlogSite app. We hope you will enjoy using the app"
         send_mail(receiver=email ,message=welcomeMsg, subject= "Welcome !!" )
-        
-        return {"access_token": "FakeToken", "message":""}
+        return {"access_token": "BadToken", "message":""}
 
 @app.route('/home', methods=["GET", "POST"])
 @login_required
@@ -99,27 +105,21 @@ def home():
             return redirect("/login")
         return render_template("home.html")
     data = json.loads(request.data)
-    username = data.get("username", None)
-    start= perf_counter_ns()
+    username = current_user.username
     posts= get_home_posts(username)
-    stop= perf_counter_ns()
     dict= {"posts":[]}
     posts=  posts[-1::-1]
     dict["more"]= len(posts)>5
     for post in posts[:5]:
-        obj= {}
-        obj["author"]= post.author
-        print(post.author)
-        obj["title"]= post.title
-        obj["caption"]= post.caption
-        obj["datetime"]= post.datetime
-        obj["id"]= post.id
-        obj["showComm"]= False
-        obj["comments"]=[]
-        obj["showCommentForm"]=False
         id= user.query.filter_by(username=post.author).first().id
-        obj["userid"]= id
-        obj["ispic"]= os.path.exists(f"static/img/propics/{id}.jpg")
+        likes= like.query.filter_by(post=post.id).all()
+        likes= [l.author for l in likes]
+        islike= current_user.username in likes
+        obj= { "author":post.author, "title":post.title, "caption":post.caption, "datetime":post.datetime,
+                "id":post.id, "userid":id, "ispic":os.path.exists(f"static/img/propics/{id}.jpg"),
+                "islike":islike, "likes": len(likes)
+            }
+        
         dict["posts"].append(obj)
     return dict
 
@@ -127,7 +127,7 @@ def home():
 @login_required
 def LoadMorePosts():
     if request.method == "GET":
-            return redirect("/home")
+        return redirect("/home")
     username= current_user.username
     data = json.loads(request.data)
     length = data.get("length")
@@ -140,21 +140,13 @@ def LoadMorePosts():
     dict= {"posts": []}
     print(posts)
     for post in posts:
-        obj= {}
-        obj["author"]= post.author
-        obj["title"]= post.title
-        obj["caption"]= post.caption
-        obj["datetime"]= post.datetime
-        obj["id"]= post.id
-        obj["showComm"]= False
-        obj["comments"]=[]
-        obj["showCommentForm"]=False
         id= user.query.filter_by(username=post.author).first().id
-        obj["userid"]= id
-        obj["ispic"]= os.path.exists(f"static/img/propics/{id}.jpg")
+        obj= { "author":post.author, "title":post.title, "caption":post.caption, "datetime":post.datetime,
+                "id":post.id, "showComm":False, "comments":[], "showCommentForm":False,
+                "userid":id, "ispic":os.path.exists(f"static/img/propics/{id}.jpg"),
+            }
         dict["posts"].append(obj)
     return dict
-
 
 @app.route('/getComments', methods=["POST"])
 def getComments():
@@ -163,14 +155,10 @@ def getComments():
     comms= get_Comments(postid)
     dict={"comments":[]}
     for comm in comms:
-        obj={}
-        obj["id"]= comm.id
-        obj["author"]=comm.author
-        obj["caption"]=comm.caption
         id= user.query.filter_by(username=comm.author).first().id
-        obj["userid"]= id
-        obj["ispic"]= os.path.exists(f"static/img/propics/{id}.jpg")
-
+        obj= {"id":comm.id, "author":comm.author, "caption":comm.caption, "userid":id,
+              "ispic":os.path.exists(f"static/img/propics/{id}.jpg"),
+            }
         dict["comments"].append(obj)
     return dict
 
@@ -214,42 +202,34 @@ def userinfo(name):
     if request.method == "GET":
         if get_user(name) is None:
             return redirect("/home")
+        elif get_user(name) == current_user:
+            return redirect("/myaccount")
         return  render_template("users.html")
     else:
         data = json.loads(request.data)
-        name = data.get("username", None)
+        name = data.get("other", None)
         e= get_user(name)
-        if e is None:
-            return {"err": "User not Found"}
         start= perf_counter_ns()
         followers= get_followers(name)
         followings= get_followings(name)
         posts= get_posts(name)
         stop= perf_counter_ns()
-        dict= {"posts":[]}
+        dict= {"posts":[], "followers":followers, "followings":followings, "userid":e.id, "err":""}
         for post in posts[-1::-1]:
-            obj= {}
-            obj["author"]= post.author
-            obj["title"]= post.title
-            obj["caption"]= post.caption
-            obj["datetime"]= post.datetime
-            obj["id"]= post.id
-            obj["showComm"]= False
-            obj["comments"]=[]
-            obj["showCommentForm"]=False
+            likes= like.query.filter_by(post=post.id).all()
+            likes= [l.author for l in likes]
+            islike= current_user.username in likes
+            obj= {"author":post.author, "title":post.title, "caption":post.caption, "datetime":post.datetime,
+                  "id":post.id, "ispic":os.path.exists(f"static/img/propics/{e.id}.jpg") ,
+                   "islike":islike, likes:len(likes)}
             dict["posts"].append(obj)
-        dict["followers"]= followers
-        dict["followings"]= followings
-        dict["userid"]= e.id
-        dict["err"]= ""
-        ispic= os.path.exists(f"static/img/propics/{e.id}.jpg")
-        dict["ispic"]=  ispic
+        dict["ispic"]=  os.path.exists(f"static/img/propics/{e.id}.jpg")
         return dict
 
 @app.route('/follow', methods=["POST"])
 def follow():
     data = json.loads(request.data)
-    person = data.get("person", None)
+    person = current_user.username
     other = data.get("other", None)
     flag = data.get("flag", None)
     if flag:
@@ -284,7 +264,26 @@ def upload():
 @app.route('/myaccount', methods=["GET", "POST"])
 @login_required
 def myaccount():
-    return render_template("myaccount.html")
+    if request.method=="GET":
+        return render_template("myaccount.html")
+    data = json.loads(request.data)
+    name= current_user.username
+    start= perf_counter_ns()
+    followers= get_followers(name)
+    followings= get_followings(name)
+    posts= get_posts(name)
+    stop= perf_counter_ns()
+    dict= {"posts":[], "followers":followers, "followings":followings, "userid":current_user.id, "err":""}
+    for post in posts[-1::-1]:
+        likes= like.query.filter_by(post=post.id).all()
+        likes= [l.author for l in likes]
+        islike= current_user.username in likes
+        obj= {"author":post.author, "title":post.title, "caption":post.caption, "datetime":post.datetime,
+            "id":post.id, "ispic": os.path.exists(f"static/img/propics/{current_user.id}.jpg"),
+            "islike":islike, "likes":len(likes)}
+        dict["posts"].append(obj)
+    dict["ispic"]=  os.path.exists(f"static/img/propics/{current_user.id}.jpg")
+    return dict
 
 @app.route('/editpost/<postid>', methods=["GET", "POST"])
 @login_required
@@ -298,10 +297,8 @@ def editpost(postid):
         title = request.form["title"]
         caption = request.form["caption"]
         postid = request.form["postid"]
-
         p= "./static/img/posts/"+ postid+".jpg"
         file.save(os.path.join(p))
-
         edit_post(postid,title,caption)
         return redirect("/myaccount")
         
@@ -315,7 +312,6 @@ def deletepost(postid):
         # Change this and display the message "This post cannot be deleted by you" 
         return redirect("/myaccount")
 
-
 @app.route('/getpost', methods=["POST"])
 @login_required
 def getpost():
@@ -323,6 +319,8 @@ def getpost():
         data = json.loads(request.data)
         postid = data.get("postid", None)
         author, title, caption= get_post(postid)
+        if author != current_user.username:
+            return redirect("/home")
         return {"author":author,"title": title, "caption":caption}
 
 
@@ -334,9 +332,9 @@ def editProfile():
     else:
         data = json.loads(request.data)
         msg = data.get("message", None)
-        username = data.get("username", None)
         password = data.get("password", None)
-        u_obj=get_user(username)
+        username= current_user.username
+        u_obj=current_user
         if not check_password_hash(u_obj.password, password):
             return {"err":True}
         
@@ -348,8 +346,8 @@ def editProfile():
             db.session.commit()
             change_data(username, newname)
             res = app.make_response(redirect("/home"))
-            res.set_cookie("username",newname, expires="Mon, 01 Jan 2024 00:00:00 GMT")
-            welcomeMsg= "Hello! Your username has been changed! Kindly contact us if it wasn't you"
+            res.set_cookie("username",newname, expires="Mon, 01 Jan 2025 00:00:00 GMT")
+            welcomeMsg= "Hello! Your username has been changed!"
             send_mail(receiver=u_obj.email ,message=welcomeMsg, subject= "Username Changed!")
 
         elif msg=="EditEmail":
@@ -408,5 +406,28 @@ def delete_pro_pic():
     p= "./static/img/propics/"+ id +".jpg"
     os.remove(p)
     return redirect("/myaccount")
- 
+
+
+@app.route('/addlike', methods=["POST"])
+@login_required
+def addlike():
+    if request.method=="POST":
+        data = json.loads(request.data)
+        postid = data.get("postid", None)
+        l = like(author=current_user.username, post=postid)
+        db.session.add(l)
+        db.session.commit()
+        return {}
+
+@app.route('/deletelike', methods=["POST"])
+@login_required
+def deletelike():
+    if request.method=="POST":
+        data = json.loads(request.data)
+        postid = data.get("postid", None)
+        l =like.query.filter_by(post=postid, author=current_user.username).first()
+        db.session.delete(l)
+        db.session.commit()
+        return {}
+
 app.run(port=3000)

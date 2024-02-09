@@ -1,1 +1,0 @@
-celery -A tasks.celery worker -l info

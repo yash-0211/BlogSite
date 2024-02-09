@@ -1,5 +1,3 @@
-
-console.log("Hi")
 var loginComponent = Vue.component('login-component', {
     template: `
     <form v-on:submit.prevent="login">
@@ -22,15 +20,17 @@ var loginComponent = Vue.component('login-component', {
                 href="/create_user">Create new</a>
         </div>
     </form>`,
+    
     data: function () {
         return {
-            username: '',
+            username: "",
             password: '',
             wrongdata: false,
         }
     },
     methods: {
         login: async function () {
+            this.username= this.$root.username
             console.log("In login Method")
             var response = await fetch('/login', {
                 method: 'POST',
@@ -47,11 +47,15 @@ var loginComponent = Vue.component('login-component', {
             if (data.access_token) {
                 localStorage.setItem('access_token', data.access_token);
                 // set cookie
-                document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2024   00:00:00 UTC; path=/'
+                document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2025   00:00:00 UTC; path=/'
+                this.$root.username= this.username
+                console.log('Root username :', this.$root.username)
                 window.location.href = '/home';
             }
             else{
                 this.wrongdata= true
+                this.username= ""
+                this.password= ""
             }
         }
     }
@@ -117,10 +121,12 @@ var signupComponent = Vue.component('signup-component', {
                     }),
                 });
                 var data = await response.json();
+                console.log("data= ", data)
                 if (data.message == "") {
                     localStorage.setItem('access_token', data.access_token);
                     // set cookie
-                    document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2024   00:00:00 UTC; path=/'
+                    this.$root.username= this.username
+                    document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2025   00:00:00 UTC; path=/'
                     window.location.href = '/home';
                 }
                 else{
@@ -131,13 +137,28 @@ var signupComponent = Vue.component('signup-component', {
 })
 
 var navComponent = Vue.component('navigation-component', {
-    template:`<nav class="navbar navbar-dark navbar-expand-lg sticky-top bg-dark py-3">
+    template:`<nav class="navbar navbar-dark navbar-expand-lg sticky-top bg-dark py-3" >
     <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="/home"><span>BlogSite</span></a>
+        <a class="navbar-brand d-flex" href="/home"><span>BlogSite</span></a>
         <div class="navbar-collapse" id="navcol-5">
-            <span class="navbar-text">Welcome {{username}} !</span>
+            <span class="navbar-text">Welcome {{$root.username}} !</span>
+
+            <form class="row d-flex" v-on:submit.prevent="getnames" style="margin-left:150px;">
+                <div class=" col-auto form-group">
+                    <input type="text" class="form-control" placeholder="Search" v-model="val" autocomplete="off" required size="40" >    
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-success" type="submit">Search</button>
+                </div>
+                <div v-if="names.length>0" style="position:absolute; top:55px;">
+                <ul class="list-group" v-for="name in names" >
+                    <a :href="'/users/'+ name " class="list-group-item" style="width:250px; text-align:left;">{{name}}</a>
+                </ul>
+                </div>
+            </form>
+
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item" style="padding-right: 40px;margin-right: -74px;"><a class="nav-link active" href="/search" style="margin-left: 0px;margin-right: 36px;">Discover</a></li>
+    
                 <li class="nav-item" style="padding-right: 40px;margin-right: -74px;"><a class="nav-link active" href="/upload" style="margin-left: 0px;margin-right: 36px;">Upload</a></li>
                 <li class="nav-item"><a class="nav-link active" href="/logout" v-on:click="logout" style="margin-left: 0px;padding-right: 0px;margin-right: 15px;">Log out</a></li>
             </ul>
@@ -150,16 +171,34 @@ var navComponent = Vue.component('navigation-component', {
 </nav>`,
     data: function () {
         return {
-            username: ""
+            username: this.$root.username,
+            val:"", 
+            names: []
+        }},
+    watch:{
+        val: async function(value){
+            if (value==""){
+                this.names=[]
+                return null
+            }
+            var response = await fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: value
+                }),
+            });
+            var data = await response.json();
+            this.names= data.names;
         }},
     methods:{
         logout: function(){
             document.cookie = 'username= ;' + ' expires=Mon, 1 Jan 2023   00:00:00 UTC; path=/'
-        }
-    },
-    mounted: function () {
-        var elements = document.cookie.split('=');
-        this.username= elements[1]
+            this.$root.username= ""
+        },
+        
     },
 })
 
@@ -169,40 +208,37 @@ var feedComponent = Vue.component('feed-component', {
     <div class="col-10">
     <div class="row mb-5">
         <div class="col-md-8 col-xl-6 text-center mx-auto" v-if="contents.length==0">
-            <h2>No new posts</h2>
+            <h2  class="navbar-text" style= "font-style: italic; ">No new posts</h2>
         </div>
     </div>
     <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-1">
         <div class="col" v-for="content in contents" >
-        <post-component :content="content" :username="username" :userid="content.userid"" :ispic="content.ispic" ></post-component>
+        <post-component :content="content" :userid="content.userid" ></post-component>
         </div>
     </div>
-    <button type="button" class="btn btn-primary" style="margin:20px" v-on:click="LoadMorePosts()" >Show more Posts</button>
+    <span v-if="!more" v-on:click="LoadMorePosts()" class="bi bi-chevron-double-down" style="font-size:25px;">Show more Posts</span> 
+
     <p style="color:red; margin:20px;" v-if="NoMorePosts" > No More Posts left to Read</p>
 </div></div></div>`,
-// :ispic="ispic" :userid="userid" 
+    props: ["child_username",],
     data: function () {
         return {
             contents: [],
-            username:"",
+            more: false,
             NoMorePosts:false
         }},
-
     mounted: async function () {
-        var elements = document.cookie.split('=');
-        this.username= elements[1]
-
+        console.log("child username:", this.child_username)
         var response = await fetch('/home', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                username: this.username
+                // username: this.child_username
             }),
         });
         var data = await response.json();
-        console.log(data)
         this.contents= data.posts
         this.more= data.more;
     },
@@ -224,26 +260,23 @@ var feedComponent = Vue.component('feed-component', {
             }
             this.contents= this.contents.concat(arr);
         }
-
     } 
 })
 
 var postComponent = Vue.component('post-component', {
     template:`<div class="card shadow" style="background-color:white;">
-    <div class="d-flex "style="margin: 10px;">
+    <div class="d-flex" style="margin: 10px;">
         <div>
-            <a class="text-muted mb-0" type="button"  v-if="username==content.author"    :href="'/editpost/'+content.id" style=" margin-right: 10px;">Edit</a> 
-             
-            <a type="button" class="text-muted mb-0" v-if="username==content.author"   data-bs-toggle="modal" data-bs-target="#exampleModal" >Delete</a> <br>
-
-            
+            <div v-if="$root.username==content.author">
+            <a class="text-muted mb-0" type="button"  :href="'/editpost/'+content.id" style="text-decoration: none; margin-right: 10px;">Edit</a>  
+            <a type="button" class="text-muted mb-0" data-bs-toggle="modal" data-bs-target="#exampleModal" style="text-decoration:none;" >Delete</a> <br>
+            </div>
             <!-- Modal -->
             <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
                   <div class="modal-header">
                     <h5 class="modal-title" id="exampleModalLabel">{{ content.title }}</h5>
-                    
                   </div>
                   <div class="modal-body">
                     Are you sure you want to delete this post?
@@ -255,59 +288,94 @@ var postComponent = Vue.component('post-component', {
                 </div>
               </div>
             </div>
-
-
-
-
-
-
-
-            <img  v-if="ispic" style="max-width:30px; height:auto; border-radius:100%;" :src="'../static/img/propics/'+userid+'.jpg'" alt="">
-            <img  v-else style="max-width:30px; height:auto; border-radius:100%;" src="../static/img/placeholder_propic.png" alt="">
+            
+            <img  v-if="content.ispic" style="object-fit:cover; height:30px; width:30px; border-radius:100%;" :src="'../static/img/propics/'+userid+'.jpg'" alt="">
+            <img  v-else style="object-fit:cover; height:30px; width:30px; border-radius:100%;" src="../static/img/placeholder_propic.png" alt="">
+            
             <span>
-            <a class=" mb-0" :href="'/users/'+ content.author" style="display:inline-block;text-decoration: none; color:black; font-size:20px"> <b>{{content.author}}</b></a>
+            <a class=" mb-0" :href="'/users/'+ content.author" style="text-decoration:none; color:black; font-size:20px"> <b>{{content.author}}</b></a>
             </span> 
-            <p class="text-muted mb-0">{{ content.datetime }}</p> 
+            
         </div>
+        <div class="text-muted mb-0" style=" position:absolute; right:10px; " >{{ content.datetime }}</div> 
+
     </div>
     <h4 class="card-title m-3">{{ content.title }}</h4>
     <img class="card-img-top w-100 d-block" style="max-width:230px;max-height:500px;width: auto;height: auto; margin:25px" :src="'../static/img/posts/'+content.id+'.jpg'" alt="">
     <div class="card-body p-4">
         <p class="card-text" style="margin-bottom: 0px;">{{content.caption}}</p>
     </div>
-    <div class="d-flex" style="margin: 10px;">
-        <button  type="button" class="btn btn-secondary" v-on:click="showComments(content)">Comments</button>
-        <a v-on:click="showCommentForm(content)" style="margin: 5px;" > Add new comment</a>
-    </div>
-    <div class="d-flex" style="margin: 10px;" v-if="content.showCommentForm">
-        <form v-on:submit.prevent="addComment(content)">
-            <textarea class="form-control" id="commentBox" rows="2" placeholder="Type your comment here..." autocomplete="off"></textarea>
-            <button class="btn btn-success btn-block mt-1" type="submit" v-on:click="content.showCommentForm">Add</button>
+    <!-- LIKE COMMENT -->
+        <form class="row d-flex" v-on:submit.prevent="addComment(content)">
+            <div class="col-auto" style="border:1px black solid; border-radius:10%; margin-bottom:10px; margin-left:20px;  text-align:center;" >
+            {{content.likes}} 
+            <span v-if="content.islike" v-on:click="like_post" class="bi bi-hand-thumbs-up-fill" style="font-size:25px;"></span> 
+            <span v-else v-on:click="like_post" class="bi bi-hand-thumbs-up" style="font-size:25px;"></span>  
+            </div>
+            <div class=" col-auto form-group">
+                <textarea class="form-control" id="commentBox" placeholder="Type your comment here..." autocomplete="off" rows=6 maxlength="200"
+                 style="height:10px; width:500px; margin-bottom:10px;" ></textarea>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-success btn-block " type="submit" >Add</button>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-secondary" v-on:click="showComments(content)"> <span class="bi bi-chat-dots-fill" ></span> Load Comments </button>
+            </div>
         </form>
-    </div>
+
     <div class="d-flex" >
-        <div v-if="content.showComm">
-            <div v-for="comment in content.comments"style="margin: 10px; margin-bottom:15px">
-                <img  v-if="comment.ispic" style="max-width:30px; height:auto; border-radius:100%;" :src="'../static/img/propics/'+comment.userid+'.jpg'" alt="">
-                <img  v-else style="max-width:30px; height:auto; border-radius:100%;" src="../static/img/placeholder_propic.png" alt="">
+        <div v-if="showComm">
+            <div v-for="comment in comments" style="margin: 10px; margin-bottom:15px; ">
+                <img  v-if="comment.ispic" style="object-fit:cover; height:30px; width:30px; border-radius:100%;" :src="'../static/img/propics/'+comment.userid+'.jpg'" alt="">
+                <img  v-else style="object-fit:cover; height:30px; width:30px; border-radius:100%;" src="../static/img/placeholder_propic.png" alt="">
                 <span style="margin-bottom:0px; padding:0px;"><a style="text-decoration:none; color:black; font-weight:bold;" :href="'/users/'+ comment.author">{{comment.author}}</a >: {{comment.caption}}</span>
-                <p v-if="username==comment.author" style="margin: 0px; padding:0px;">
+                <p v-if="$root.username==comment.author" style="margin: 0px; padding:0px;">
                     <small class="link-secondary" v-on:click="deleteComment(comment.id, content)">delete</small>
                 </p>
             </div>
         </div>
     </div>
 </div>`,
-props:['content','username', 'ispic', 'userid'],
+props:['content', 'userid'],
 data: function () {
     return {
-        id:"", 
+        id:"", showCommentForm:false, showComm:false, comments:[],
     }},
 methods:{
+    like_post:async function(event){
+        if (this.content.islike){
+            this.content.likes --
+            var response = await fetch('/deletelike', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    postid: this.content.id,
+                })
+            });
+            var data= await response.json();
+        }
+        else{
+            this.content.likes ++
+            var response = await fetch('/addlike', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    postid: this.content.id,
+                })
+            });
+            var data= await response.json()
+        }
+        this.content.islike= !this.content.islike
+    },
+
     showComments: async function(content){
-        console.log("In showComments, ",content)
-        content.showComm= ! content.showComm
-        if(content.showComm==true  ){
+        this.showComm= ! this.showComm
+        if(this.showComm==true  ){
             var response = await fetch('/getComments', {
                 method: 'POST',
                 headers: {
@@ -318,20 +386,15 @@ methods:{
                 }),
             });
             var data= await response.json();
-            console.log("comments received")
-
-            console.log(data)
-            content.comments=data.comments
+            this.comments=data.comments
         }},
-    showCommentForm: function(content){
-        content.showCommentForm= ! content.showCommentForm
-    },
+    
     addComment: async function(content){
         console.log("Post id is ", content)
-        console.log("This.username = ",  content)
-        // Above I am able tp write content instead of this.content
+        // Above I am able to write content instead of this.content
         // But for other props(username, ispic, userid) I must use the this keyword otherwise get an erroe
         caption= document.getElementById('commentBox').value
+        this.showCommentForm= ! this.showCommentForm
         if (caption==""){
             return null
         }
@@ -342,14 +405,13 @@ methods:{
             },
             body: JSON.stringify({
                 postid: content.id,
-                username: this.username,
                 caption: caption
             })
         });
         var data= await response.json();
-        content.comments.push(data.comment)
+        this.comments.push(data.comment)
+        console.log(data.comment)
         document.getElementById('commentBox').value= ""
-
     },
     deleteComment: async function(id, content){
         console.log("Comment id: ",id)
@@ -363,9 +425,7 @@ methods:{
             })
         });
         var data= await response.json();            
-        content.comments = content.comments.filter((c)=> c.id!=id)
-        // content.showComm= false
-        // showComments(content)
+        this.comments = this.comments.filter((c)=> c.id!=id)
     }}
 })
 
@@ -373,18 +433,17 @@ var usersComponent = Vue.component('users-component', {
     template:`<div class="container py-4 py-xl-5">
     <div class="row justify-content-md-center">
     <div class="col-10">
-        <div v-if="ispic">
-            <img class="card-img-top w-100 d-block" style="max-width:100px; height:auto; border-radius:100%;"
+        <div style="height=100px; width:100px;" v-if="ispic">
+            <img class="card-img-top w-100 d-block" style="object-fit:cover; height:100px; width:100px; border-radius:100%;" 
                 :src="'../static/img/propics/'+userid+'.jpg'" alt="">
         </div>
-        <div v-else>
-            <img class="card-img-top w-100 d-block" style="max-width:100px; height:auto; border-radius:100%; " 
+        <div style="height=100px; width:100px;" v-else>
+            <img class="card-img-top w-100 d-block" style="object-fit:cover; height:100px; width:100px; border-radius:100%;" 
                 :src="'../static/img/placeholder_propic.png'" alt="">
         </div>
        
-
         <div class="row mb-5">
-            <h2>{{username}}</h2>
+            <h2>{{other}}</h2>
             <div class=" pt-1 pb-1">
                 <a type="button" id="followButton" v-on:click="follow">Follow</a>
             </div>
@@ -413,22 +472,21 @@ var usersComponent = Vue.component('users-component', {
                 </div>
             </span>
         </div>
-            <div class="col-md-8 col-xl-6 text-center mx-auto" v-if="contents.length==0">
-                <h4>No posts</h4>
+            <div class="col-md-8 mt-4 col-xl-6 text-center mx-auto" v-if="contents.length==0">
+                <h3 style="font-style: italic;">No posts</h3>
             </div>
 
             <div v-for="content in contents" style="margin-top:30px;">
-                <post-component :content="content" :username="current_user" :ispic="ispic" :userid="userid" ></post-component>
+                <post-component :content="content" :userid="userid" ></post-component>
             </div>
         
     </div></div></div>`,
     data: function () {
         return {
-            username:"",
+            other:"",
             followers: [],
             following:[],
             contents:[],
-            current_user:"",
             isfollow:true,
             ispic: false,
             userid:""
@@ -441,22 +499,20 @@ var usersComponent = Vue.component('users-component', {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    person: this.current_user,
-                    other: this.username,
+                    other: this.other,
                     flag: this.isfollow
                 })
             });
             var data= await response.json();
             this.isfollow= ! this.isfollow
             if (this.isfollow){
-                this.followers.push(this.current_user)
+                this.followers.push(this.$root.username)
                 console.log(this.followers)
                 document.getElementById("followButton").innerHTML= "Unfollow"
                 document.getElementById("followButton").className= "btn btn-danger"
             }
             else{
-                // this.followers.remove(this.current_user)
-                this.followers = this.followers.filter((i)=> i!=this.current_user)
+                this.followers = this.followers.filter((i)=> i!=this.$root.username)
                 console.log(this.followers)
                 document.getElementById("followButton").innerHTML= "Follow"
                 document.getElementById("followButton").className= "btn btn-success"
@@ -466,35 +522,28 @@ var usersComponent = Vue.component('users-component', {
     mounted: async function(){
         var url= window.location.href
         var arr= url.split("/")
-        this.username= arr[arr.length-1]
-        console.log(this.username)
-        var response = await fetch('/users/'+this.username, {
+        this.other= arr[arr.length-1]
+        console.log("BEFORE")
+        var response = await fetch('/users/'+this.other, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                username: this.username
+                other: this.other
             })
         });
         var data= await response.json();
-        if (data.err !=""){
-            // Do something for error
-            console.log("Error");
-            window.location.href= "/home"
-        }
-        else{
-            console.log(data)
-            this.followers= data.followers
-            this.following= data.followings
-            this.contents= data.posts
-            this.userid= data.userid
-            this.ispic= data.ispic
-        }
-        var elements = document.cookie.split('=');
-        this.current_user= elements[1]
+        console.log("AFTER")
+        console.log(data)
+        this.followers= data.followers
+        this.following= data.followings
+        this.contents= data.posts
+        this.userid= data.userid
+        this.ispic= data.ispic
+        
         document.getElementById("followButton").className
-        if (this.followers.includes(this.current_user)){
+        if (this.followers.includes(this.$root.username)){
             this.isfollow= true
             document.getElementById("followButton").innerHTML= "Unfollow"
             document.getElementById("followButton").className= "btn btn-danger"
@@ -504,13 +553,8 @@ var usersComponent = Vue.component('users-component', {
             document.getElementById("followButton").innerHTML= "Follow"
             document.getElementById("followButton").className= "btn btn-success"
         }
-
-        if (this.username==this.current_user){
-            window.location.href= "/myaccount"
-        }
     }
 })
-
 
 var searchComponent = Vue.component('search-component', {
     template: `<div class="container">
@@ -564,15 +608,13 @@ var myaccountComponent = Vue.component('myaccount-component', {
     template:`<div class="container py-4 py-xl-5">
     <div class="row justify-content-md-center">
     <div class="col-10">
-        <img v-if="ispic" class="card-img-top w-100 d-block" id="profile_pic" data-bs-toggle="modal" data-bs-target="#exampleModalCenter" title="Change Profile Photo" style="max-width:100px; height:auto; border-radius:100%; "
+        <img v-if="ispic" class="card-img-top w-100 d-block" id="profile_pic" data-bs-toggle="modal" data-bs-target="#exampleModalCenter" title="Change Profile Photo" style="border:1px black solid; object-fit:cover; height:100px; max-width:100px; border-radius:10%;"
             :src="'../static/img/propics/'+userid+'.jpg'" alt="">
-        <img v-else class="card-img-top w-100 d-block" id="profile_pic"  data-bs-toggle="modal" data-bs-target="#exampleModalCenter" title="Add a Profile Photo" style="max-width:100px; height:auto; border-radius:100%; " 
+        <img v-else       class="card-img-top w-100 d-block" id="profile_pic"  data-bs-toggle="modal" data-bs-target="#exampleModalCenter" title="Add a Profile Photo" style="object-fit:cover; height:100px; max-width:100px; border-radius:10%;"
             :src="'../static/img/placeholder_propic.png'" alt="">
-    
     <form method="POST" id="form_pro_pic" action="upload_profile_pic" enctype="multipart/form-data">
     <input type="file" accept="image/jpeg,image/jpg,image/png" id="my_file" name="profile_pic">
     </form>
-
     <!-- Modal -->
     <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -592,14 +634,15 @@ var myaccountComponent = Vue.component('myaccount-component', {
         </div>
       </div>
     </div>
+    
+    <!-- Modal Finished-->
 
-
-    <div>
-        <h2>{{current_user}}</h2>
+    
+        <h2 >{{$root.username}}</h2>
         <div class=" pt-1 pb-1">
-            <a type="button" class="btn btn-warning" href="/editprofile">Edit Profile</a>
+            <a type="button" class="btn btn-secondary" href="/editprofile">Edit Profile</a>
         </div>
-    </div>
+    
     <div class="row gy-4 row-cols-1 row-cols-md-6 row-cols-xl-6 mx-auto d-flex justify-content-between" style="display:inline; margin-bottom:15px;">
         <span class="h3" style="padding:0px;">Total posts: {{contents.length}} </span >
         <span class="dropdown">     
@@ -627,13 +670,12 @@ var myaccountComponent = Vue.component('myaccount-component', {
             <h4>No posts</h4>
         </div>
         <div v-for="content in contents" style="margin-top:30px;">
-            <post-component :content="content" :username="current_user" :ispic="ispic" :userid="userid" ></post-component>
+            <post-component :content="content" :userid="userid" ></post-component>
         </div>
     
 </div></div></div>`,
     data: function () {
         return {
-            current_user:"",
             followers: [],
             following:[],
             contents:[],
@@ -641,32 +683,22 @@ var myaccountComponent = Vue.component('myaccount-component', {
             userid: ""
         }},
     mounted: async function(){
-        var elements = document.cookie.split('=');
-        this.current_user= elements[1]
-        console.log(this.current_user)
-        var response = await fetch('/users/'+this.current_user, {
+        var response = await fetch('/myaccount', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                username: this.current_user
+                "xyz":"xyz"
             })
         });
         var data= await response.json();
-        if (data.err !=""){
-            // Do something for error
-            console.log("Error");
-            // windows.href= "/home"
-        }
-        else {
         this.followers= data.followers 
         this.following= data.followings
         this.contents= data.posts
         this.userid= data.userid
         this.ispic= data.ispic
         console.log(this.contents, this.contents.length)
-        }
     }
 })
 
@@ -696,19 +728,12 @@ var editpostComponent = Vue.component('editpost-component', {
 </div>`,
     data: function () {
         return {
-            current_user:"",
             postid:"",
             title:"",
             caption: "",
-            newname:"",
             password:"",
-            newpassword:"",
-
         }},
     mounted: async function(){
-        var elements = document.cookie.split('=');
-        this.current_user= elements[1]
-
         var url= window.location.href
         var arr= url.split("/")
         this.postid= arr[arr.length-1]
@@ -722,9 +747,9 @@ var editpostComponent = Vue.component('editpost-component', {
             })
         });
         var data= await response.json();
-        if (this.current_user != data.author){
-            history.back()
-        }
+        // if (this.$root.username != data.author){
+        //     history.back()
+        // }
         this.title= data.title
         this.caption= data.caption
     }
@@ -735,7 +760,7 @@ var editProfileComponent = Vue.component('editprofile-component', {
     <div class="row justify-content-md-center">
         <div class="col-10">
             <div class="row mb-5">
-                <h2>{{current_user}}</h2>
+                <h2>{{$root.username}}</h2>
             </div>
 
                 <button type="button" class="btn btn-secondary btn-lg" name="edit" v-on:click="showUedit" >Edit Username</button> <br>
@@ -816,7 +841,7 @@ var editProfileComponent = Vue.component('editprofile-component', {
                             <button class="btn btn-warning btn-block fa-lg mb-3" v-on:click="dataFlag= !dataFlag">Cancel</button>
                             <button class="btn btn-success btn-block fa-lg mb-3" type="submit" >Submit</button>
                         </div>
-                        <p v-if="download">click <a :href="'../static/csvdatafiles/'+current_user+'.csv'" download="blog.csv" v-on:click="download=false">here</a> </p>
+                        <p v-if="download">click <a :href="'../static/csvdatafiles/'+$root.username+'.csv'" download="blog.csv" v-on:click="download=false">here</a> </p>
                     </form>
                 </div>
                 <button type="button" class="btn btn-danger btn-lg" v-on:click="showDelete">Delete Account</button><br>
@@ -841,7 +866,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
     </div>`,
     data: function () {
         return {
-            current_user:"",
             password:"",
             err:false,
 
@@ -859,10 +883,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
             email_already_exist: false
         }},
     
-    mounted:async function(){
-        var elements = document.cookie.split('=');
-        this.current_user= elements[1]
-    },
     methods:{
         showUedit: function(){
             this.password=""
@@ -882,7 +902,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
             this.deleteFlag=false
             this.usernameFlag= false
 
-            
         },
         showPedit:function(){
             this.password=""
@@ -925,7 +944,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    username:this.current_user,
                     password: this.password,
                     newname: this.newname,
                     message: "EditUsername",
@@ -938,8 +956,8 @@ var editProfileComponent = Vue.component('editprofile-component', {
                     this.username_already_exist= true
                     return null
                 }
-            this.username= this.newname
-            document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2024   00:00:00 UTC; path=/'
+                this.$root.username= this.newname
+            document.cookie = 'username=' + this.$root.username + '; expires=Mon, 1 Jan 2025   00:00:00 UTC; path=/'
             }
 
         },
@@ -951,7 +969,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    username:this.current_user,
                     password: this.password,
                     email: this.email,
                     message: "EditEmail",
@@ -974,7 +991,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    username:this.current_user,
                     newpassword: this.newpassword,
                     password: this.password,
                     message: "EditPassword"
@@ -983,8 +999,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
             var data= await response.json();
             console.log(data)
             this.err= data.err
-            
-
         },
         deleteaccount: async function(){
             var response = await fetch('/editprofile', {
@@ -993,7 +1007,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    username:this.current_user,
                     password: this.password,
                     message: "DeleteAccount"
                 })
@@ -1001,8 +1014,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
             var data= await response.json();
             console.log(data)
             this.err= data.err
-
-
         },
         getdata: async function(){
             var response = await fetch('/editprofile', {
@@ -1011,7 +1022,6 @@ var editProfileComponent = Vue.component('editprofile-component', {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    username:this.current_user,
                     password: this.password,
                     message: "GetData"
                 })
@@ -1023,10 +1033,19 @@ var editProfileComponent = Vue.component('editprofile-component', {
         }}
 })
 
-
 var app = new Vue({
     el: '#app',
-    data: {
-        already:'', worngdata:''
-      }
+    data: { already:"Hello this is already", worngdata:"",  username:"" },
+    mounted: async function(){
+        var response = await fetch('/getname', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+            })
+        });
+        var data= await response.json();
+        this.username= data.username
+    },
 });

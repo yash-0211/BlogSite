@@ -36,6 +36,7 @@ def alreadyExist(name,email):
 def get_home_posts(username): # home
     f_obj= follower.query.filter_by(person=username).all()
     follows = [f.following for f in f_obj]
+    follows.append(username)
     posts= db.session.query(post).filter(post.author.in_(follows))
     return list(posts)
 
@@ -107,7 +108,7 @@ def delete_post(postid, username):
         db.session.commit()
         return True
     else:
-        return None
+        return False
 
 @cache.memoize(10)
 def get_post(postid):
@@ -116,7 +117,7 @@ def get_post(postid):
         return None
     return post_obj.author , post_obj.title , post_obj.caption
 
-def change_data(username, newname):
+def change_data(username, newname): 
     posts = post.query.filter_by(author=username).all()
     for p in posts:
         p.author= newname
