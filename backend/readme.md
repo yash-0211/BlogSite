@@ -1,10 +1,11 @@
-## Basic Requirements: 
-You should have Python Installed.  
-You should have Linux terminal or WSL activated in case of Windows.  
-You should have redis and MailHog installed.  
+## Basic Requirements:
+Please install the below technologies on your linux machine ( or WSL) before running the project:  
+* Python
+* Redis  
+* MailHog  
+* PostgresQL
 
 
-## Application Setup:
+## Application Backend Setup:
 Run ` bash run.sh ` on a linux (or WSL ) terminal
 
-    
