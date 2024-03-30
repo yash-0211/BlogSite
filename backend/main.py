@@ -63,18 +63,10 @@ def getname(token):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # if request.method=="GET":
-    #     if session.get('logged_in'):
-    #         print("Redirecting to home")
-    #         return redirect("/home")
-    #     return render_template('login.html')
     data = json.loads(request.data)
     username = data.get("username", None)
     password = data.get("password", None)
-    print(username, password)
     u_obj= get_user(username)
-    print(u_obj)
-    # if u_obj is not None and check_password_hash(u_obj.password, password):
     if u_obj is not None and u_obj.password==password:
         session['logged_in']= True
         token= jwt.encode(
@@ -85,20 +77,8 @@ def login():
         return {"access_token":token }
     return {}
 
-@app.route('/logout', methods=["GET", "POST"])
-@token_required
-def logout(user):
-    # delete token also
-    session['logged_in']= False
-    # return redirect("/home")
-    return {}
-
 @app.route('/create_user', methods=['GET', 'POST'])
 def create_user():
-    # if request.method=="GET":
-    #     if session.get('logged_in'):
-    #         return redirect("/home")
-    #     return render_template("create_user.html")
     data = json.loads(request.data)
     username = data.get("username", None)
     email = data.get("email", None)
@@ -189,11 +169,8 @@ def deleteComment(token):
     delete_Comment(id)
     return {}
 
-@app.route('/search', methods=["GET", "POST"])
+@app.route('/search', methods=["POST"])
 def search():
-    # if request.method == "GET":
-    #     return render_template("search.html")
-    # else:
     data = json.loads(request.data)
     name = data.get("username", None)
     users= search_dao(name)
@@ -203,18 +180,8 @@ def search():
     return {"names": names}
 
 
-@app.route('/users/<name>', methods=["GET", "POST"])
+@app.route('/users/<name>', methods=["POST"])
 def userinfo(name):
-    # if request.method == "GET":
-    #     try:
-    #         username= request.cookies['username']
-    #     except:
-    #         username= None
-    #     if get_user(name) is None: return redirect("/home")
-    #     if name==username: return redirect("/myaccount")
-    #     return render_template("users.html")
-    print("In users page")
-    
     e= get_user(name)
     if not e: return {}
     followers= get_followers(name)
@@ -240,10 +207,6 @@ def follow(token):
         follow_dao(person, other)
     return {}
 
-# @app.route('/upload', methods=["GET"])
-# def upload_get():
-#     return render_template("upload.html")
-
 @app.route('/upload', methods=["POST"])
 @token_required
 def upload(token):
@@ -258,17 +221,12 @@ def upload(token):
     file = request.files.get("file" )
     title = request.form.get("title")
     content = request.form.get("content") 
-    print("----------------------------",title, content, file)
 
     if file:
         p= "./static/img/posts/"+ filename+".jpg"
         file.save(os.path.join(p))
     upload_post(username,filename,content,title)
     return {}
-
-@app.route('/myaccount', methods=["GET"])
-def myaccount_get():
-    return render_template("myaccount.html")
 
 @app.route('/myaccount', methods=["POST"])
 @token_required
@@ -291,10 +249,6 @@ def editpost(token):
     postid = request.form.get("postid")
 
     post= get_post(postid)
-    print("TITLE", title)
-    print("CAPTION", caption)
-    print("POST-ID: ", postid)
-    print("FILE: ", file)
     if post is None or post[0] != token['username']:
         return {}
     p= "./static/img/posts/"+ postid+".jpg"
@@ -316,8 +270,7 @@ def deletepost(token):
     result = delete_post(postid,token['username'])
     if result: 
         return {}
-    else:
-        # Change this and display the message "This post cannot be deleted by you" 
+    else: 
         return {}
 
 @app.route('/getpost', methods=["POST"])
@@ -383,7 +336,6 @@ def editProfile(token):
         welcomeMsg= "Hello! Your password has been changed! Kindly contact us if it wasn't you"
         send_mail(receiver=u_obj.email ,message=welcomeMsg, subject= "Password Changed !")
         db.session.commit()
-        logout()
 
     elif msg=="GetData":
         from models import post
@@ -403,15 +355,13 @@ def editProfile(token):
         delete_data(username)
         db.session.delete(u_obj)
         db.session.commit()
-        logout()
+        
     return {"err": False}
 
 @app.route('/upload_profile_pic', methods=["POST"])
 @token_required
 def upload_profile_pic(token):
     file = request.files.get("file")
-    print("File to be uploaded: ", file)
-    # id= str(token['username'])
     id= get_user(token['username']).id
     print("id= ", id)
     p= "./static/img/propics/"+ str(id) +".jpg"
@@ -425,7 +375,6 @@ def delete_pro_pic(token):
     try:
         p= "./static/img/propics/"+ id +".jpg"
         os.remove(p)
-        print("REmoveed pic")
     except:
         pass
     return {}

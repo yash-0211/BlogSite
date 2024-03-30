@@ -66,23 +66,9 @@ export default ({
             this.names= data.names;
         }},
     methods:{
-        doStuff: function(){
-            console.log("Clicked Outside!!")
-        },
         log_func: async function(){
             var log= document.getElementById("log")
             if (log.innerHTML=="Log out"){
-                var response = await fetch('http://localhost:5000/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authentication-Token': localStorage.getItem('access_token')
-                    },
-                    body: JSON.stringify({
-                    }),
-                });
-                var data = await response.json();
-                console.log(data)
                 document.cookie = 'username= ;' + ' expires=Mon, 1 Jan 2023   00:00:00 UTC; path=/'
                 localStorage.removeItem("access_token")
                 window.location.href = '/home';
@@ -93,7 +79,6 @@ export default ({
             }
     },
     mounted: async function () {
-        
         var token= localStorage.getItem('access_token')
         var response = await fetch('http://localhost:5000/nav', {
             method: 'POST',
@@ -123,7 +108,6 @@ export default ({
         resize: none;
         height: 0%;
     }
-
     #search_results{
         position:absolute; 
         width:400px;
