@@ -174,7 +174,7 @@ export default ({
 
         editusername: async function(){
             console.log("In editusername")
-            var response = await fetch('http://localhost:5000/editprofile', {
+            var response = await fetch('http://localhost:5000/users/' + this.username, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -205,7 +205,7 @@ export default ({
         },
 
         editemail: async function(){
-            var response = await fetch('http://localhost:5000/editprofile', {
+            var response = await fetch('http://localhost:5000/users/' + this.username , {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -233,7 +233,7 @@ export default ({
         },
 
         editpassword: async function(){
-            var response = await fetch('http://localhost:5000/editprofile', {
+            var response = await fetch('http://localhost:5000/users/' + this.username , {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -259,7 +259,7 @@ export default ({
             
         },
         deleteaccount: async function(){
-            var response = await fetch('http://localhost:5000/editprofile', {
+            var response = await fetch('http://localhost:5000/users/' + this.username , {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -281,9 +281,10 @@ export default ({
             }
             document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2023   00:00:00 UTC; path=/'
             localStorage.removeItem("access_token")
+            window.location.href = '/login';
         },
         getdata: async function(){
-            var response = await fetch('http://localhost:5000/editprofile', {
+            var response = await fetch('http://localhost:5000/users/' + this.username , {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -86,15 +86,13 @@ export default {
     methods: {
         remove_pc: async function(){
             console.log("Removing pic")
-            var response = await fetch('http://localhost:5000/delete_pro_pic', {
-            method: 'POST',
+            var response = await fetch('http://localhost:5000/profile_pic', {
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
                 'Authentication-Token': localStorage.getItem('access_token')
             },
-            body: JSON.stringify({
-                
-            })
+            
         });
         var data= await response.json();
         window.location.reload()
@@ -109,7 +107,7 @@ export default {
             const fileField = document.getElementById('my_file')
             formData.append("file", fileField.files[0]);
             
-            var response = await fetch('http://localhost:5000/upload_profile_pic', {
+            var response = await fetch('http://localhost:5000/profile_pic', {
                 method: 'POST',
                 headers: {
                     'Authentication-Token': localStorage.getItem('access_token')
@@ -123,14 +121,11 @@ export default {
  
     mounted: async function(){
         var response = await fetch('http://localhost:5000/myaccount', {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authentication-Token': localStorage.getItem('access_token')
             },
-            body: JSON.stringify({
-                "xyz":"xyz"
-            })
         });
         var data= await response.json();
         

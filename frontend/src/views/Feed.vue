@@ -34,14 +34,12 @@ export default {
     mounted: async function () {
         var token= localStorage.getItem('access_token')
         var response = await fetch('http://localhost:5000/home', {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authentication-Token': localStorage.getItem('access_token')
             },
-            body: JSON.stringify({
-
-            }),
+           
         });
         var data = await response.json();
         if (data.posts){
@@ -51,7 +49,7 @@ export default {
     },
     methods:{
         LoadMorePosts: async function(){
-            var response = await fetch('http://localhost:5000/LoadMorePosts', {
+            var response = await fetch('http://localhost:5000/home', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

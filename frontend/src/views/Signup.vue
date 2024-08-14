@@ -80,8 +80,8 @@ export default {
                 this.err= true
                 return null
             }
-            var response = await fetch('http://localhost:5000/create_user', {
-                method: 'POST',
+            var response = await fetch('http://localhost:5000/users/' + this.username, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },

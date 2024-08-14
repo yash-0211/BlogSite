@@ -60,8 +60,8 @@ export default {
             formData.append("file", fileField.files[0]);
             console.log(formData)
 
-            var response = await fetch('http://localhost:5000/upload', {
-                method: 'POST',
+            var response = await fetch('http://localhost:5000/post/'+ 'abcd', {
+                method: 'PUT',
                 headers: {
                     'Authentication-Token': localStorage.getItem('access_token')
                 },

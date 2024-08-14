@@ -70,17 +70,23 @@ export default {
     methods:{
         follow:async function(){
             console.log("Inside Follow Function")
-            var response = await fetch('http://localhost:5000/follow', {
+            if (this.isfollow){
+                var response = await fetch('http://localhost:5000/follow/' + this.other, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authentication-Token': localStorage.getItem('access_token')
+                }});
+            }
+            else{
+                var response = await fetch('http://localhost:5000/follow/' + this.other, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authentication-Token': localStorage.getItem('access_token')
-                },
-                body: JSON.stringify({
-                    other: this.other,
-                    flag: this.isfollow
-                })
-            });
+                }});
+            }
+
             var data= await response.json();
             console.log("Data inside Follow function: ",data)
             if (data.Alert){
@@ -108,14 +114,12 @@ export default {
         var arr= url.split("/")
         this.other= arr[arr.length-1]
         var response = await fetch('http://localhost:5000/users/'+this.other, {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authentication-Token': localStorage.getItem('access_token')
             },
-            body: JSON.stringify({
-                other: this.other
-            })
+           
         });
         var data= await response.json();
         

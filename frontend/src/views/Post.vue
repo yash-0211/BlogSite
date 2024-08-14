@@ -60,12 +60,13 @@
         <!-- Modal edit end  -->
 
         <img  v-if="ispic" style="object-fit:cover; height:30px; width:30px; border-radius:100%;" :src="'http://localhost:5000/static/img/propics/'+userid+'.jpg'" alt="">
+                                                                                                    <!-- :src="'http://localhost:5000/static/img/propics/'+comment.userid+'.jpg'" -->
         <img  v-else style="object-fit:cover; height:30px; width:30px; border-radius:100%;" src="http://localhost:5000/static/img/placeholder_propic.png"  alt="">
-        
+
         <span>
-            <a class=" mb-0" :href="'/users/'+ author" style="text-decoration:none; color:black; font-size:20px"> <b>{{author}}</b></a>
+             <a class=" mb-0" :href="'/users/'+ author" style="text-decoration:none; color:black; font-size:20px"> <b>{{author}}</b></a>
         </span> 
-    
+
     </div>
     <div class="text-muted mb-0" style=" position:absolute; right:10px; " >{{ datetime }}</div> 
 
@@ -134,6 +135,7 @@ export default {
         return {
             id:"",
             author: "",
+            userid: "",
             title: "",
             caption: "",
             datetime: "",
@@ -148,44 +150,49 @@ export default {
         }},
     methods:{
         like_post:async function(){
-            var response = await fetch('http://localhost:5000/like', {
-                    method: 'POST',
+            if (this.islike){
+                var response = await fetch('http://localhost:5000/like/' + this.id, {
+                    method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authentication-Token': localStorage.getItem('access_token')
                     },
-                    body: JSON.stringify({
-                        postid: this.id,
-                    })
                 });
-            var data= await response.json();
-            if (data.Alert){
-                return null
-            }
-            if (this.islike){
-                this.likes --
             }
             else{
+                var response = await fetch('http://localhost:5000/like/'+ this.id, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authentication-Token': localStorage.getItem('access_token')
+                        },
+                        body: JSON.stringify({
+                            
+                        })
+                    });
+                }
+            var data= await response.json();
+            if (data.Alert)
+                return null
+            if (this.islike)
+                this.likes --
+            else
                 this.likes ++
-            }
-            this.islike= !this.islike
+            this.islike = !this.islike
         },
 
         showComments: async function(){
             console.log("this.id=", this.id)
             if(true){
-                var response = await fetch('http://localhost:5000/getComments', {
-                    method: 'POST',
+                var response = await fetch('http://localhost:5000/commentlist/' + this.id, {
+                    method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authentication-Token': localStorage.getItem('access_token')
                     },
-                    body: JSON.stringify({
-                        id: this.id
-                    }),
                 });
                 var data= await response.json();
-                console.log(data, data.comments)
+                console.log(data.comments)
                 this.comments=data.comments
         }},
         
@@ -193,8 +200,8 @@ export default {
             if (this.commentText==""){
                 return null
             }
-            var response = await fetch('http://localhost:5000/addComment', {
-                method: 'POST',
+            var response = await fetch('http://localhost:5000/comment/' + '5', {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authentication-Token': localStorage.getItem('access_token')
@@ -209,33 +216,32 @@ export default {
             console.log("comment: " ,data.comment)
             this.commentText = ""
         },
-        deleteComment: async function(id){
-            console.log("Comment id: ",id)
-            var response = await fetch('http://localhost:5000/deleteComment', {
-                method: 'POST',
+        deleteComment: async function(commentid){
+            console.log("Comment id: ",commentid)
+            var response = await fetch('http://localhost:5000/comment/' + commentid, {
+                method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authentication-Token': localStorage.getItem('access_token')
                 },
                 body: JSON.stringify({
-                    commentid: id
-                })
+                    })
             });
             var data= await response.json();            
-            this.comments = this.comments.filter((c)=> c.id!=id)
+            this.comments = this.comments.filter((c)=> c.id!=commentid)
         },
         delete_post:  async function(){
-            var response = await fetch('http://localhost:5000/deletepost', {
-                method: 'POST',
+            var response = await fetch('http://localhost:5000/post/' + this.id, {
+                method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authentication-Token': localStorage.getItem('access_token')
                 },
                 body: JSON.stringify({
-                    postid: this.id
                 })
             });
             var data= await response.json();
+            window.location.reload();
         },
         editPost: async function(){
             console.log("this.modal_id=", this.modal_id)
@@ -243,11 +249,11 @@ export default {
             
             formData.append("title", document.getElementById("title-text").value);
             formData.append("caption", document.getElementById("content-text").value);
-            formData.append("postid", document.getElementById("modal_post_id").value);
+            // formData.append("postid", document.getElementById("modal_post_id").value);
             formData.append("file", document.getElementById("edit_post_image").files[0]);
             console.log(formData)
 
-            var response = await fetch('http://localhost:5000/editpost', {
+            var response = await fetch('http://localhost:5000/post/'+ this.postid , {
                 method: 'POST',
                 headers: {
                     'Authentication-Token': localStorage.getItem('access_token')
@@ -256,7 +262,7 @@ export default {
             });
             var data = await response.json();
             this.modal_id= ""
-            // window.location.reload()
+            window.location.reload()
         },
         image_changed: function(){
             var image_object= document.getElementById("edit_post_image").files[0]
@@ -271,22 +277,17 @@ export default {
             document.getElementById("imageid").src= 'http://localhost:5000/static/img/posts/'+ this.postid+'.jpg';
             document.getElementById("title-text").value= this.title
             document.getElementById("content-text").value= this.caption
-
             document.getElementById("modal_post_id").value= this.id
-            
         },
     },
     mounted: async function(){
         this.id= this.postid
-        var response = await fetch('http://localhost:5000/getpost', {
-                method: 'POST',
+        var response = await fetch('http://localhost:5000/post/'+ this.postid, {
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authentication-Token': localStorage.getItem('access_token')
                 },
-                body: JSON.stringify({
-                    postid: this.postid
-                })
             });
             var data= await response.json();
             this.author =  data.author
@@ -296,7 +297,9 @@ export default {
             this.ispic = data.ispic
             this.islike = data.islike
             this.likes = data.likes
-    }
+            this.userid = data.userid
 
+            console.log("this.userid: ", this.userid)
+    }
 }
 </script>

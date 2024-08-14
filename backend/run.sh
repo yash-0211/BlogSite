@@ -11,8 +11,6 @@ fi
 redis-server &
 celery -A tasks.celery worker -l info &
 celery -A tasks.celery beat --max-interval 1 -l info &
-~/go/bin/MailHog &
-
 
 # start flask server
 echo "Starting flask server"

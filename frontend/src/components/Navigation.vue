@@ -81,13 +81,11 @@ export default ({
     mounted: async function () {
         var token= localStorage.getItem('access_token')
         var response = await fetch('http://localhost:5000/nav', {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authentication-Token': localStorage.getItem('access_token')
             },
-            body: JSON.stringify({
-            }),
         });
         var data = await response.json();
         var log= document.getElementById("log")
