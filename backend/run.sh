@@ -9,9 +9,10 @@ else
 fi
 
 redis-server &
-celery -A tasks.celery worker -l info &
-celery -A tasks.celery beat --max-interval 1 -l info &
+
+celery -A core.tasks.celery worker -l info &
+celery -A core.tasks.celery beat --max-interval 1 -l info &
 
 # start flask server
 echo "Starting flask server"
-python3 main.py
+python -m core.server

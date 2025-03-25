@@ -74,7 +74,7 @@ export default {
             if (data.access_token) {
                 localStorage.setItem('access_token', data.access_token);
                 // set cookie
-                document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2025   00:00:00 UTC; path=/'
+                document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2026   00:00:00 UTC; path=/'
                 window.location.href = '/home';
             }
             else{

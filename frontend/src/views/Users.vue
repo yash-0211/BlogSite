@@ -20,8 +20,8 @@
         <div class="row gy-4 row-cols-1 row-cols-md-6 row-cols-xl-6 mx-auto  d-flex justify-content-between" style="display:inline;">
             <span class="h3" style="padding:0px;">Total posts: {{posts.length}} </span >
             <span class="dropdown">     
-                <button class="btn btn-secondary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >
-                    Followers
+                <button class="btn btn-secondary btn-lg dropdown-toggle" type="button" id="followers_button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >
+                    followers: {{followers.length}}
                 </button>
                 
                     <div class="dropdown-menu"  v-if="followers" >
@@ -31,8 +31,8 @@
                     </div>
             </span>
             <span class="dropdown">
-                <button class="btn btn-secondary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-left:30px;">
-                    Following
+                <button class="btn btn-secondary btn-lg dropdown-toggle" type="button" id="following_button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-left:30px;">
+                    Following: {{following.length}}
                 </button>
                 <div class="dropdown-menu" v-if="following.length">
                     <div  v-for="person in following " :key="person" >
@@ -46,17 +46,17 @@
             </div>
 
             <div v-for="postid in posts" :key="postid" style="margin-top:30px;">
-                <Post :postid="postid"  />
+                <Blog :postid="postid"  />
             </div>
         
     </div></div></div>
 </template>
 
 <script>
-import Post from './Post.vue'
+import Blog from './Blog.vue'
 export default {
     name:'Users',
-    components: {Post},
+    components: {Blog},
     data: function () {
         return {
             other: this.$route.params.name,
@@ -86,7 +86,7 @@ export default {
                     'Authentication-Token': localStorage.getItem('access_token')
                 }});
             }
-
+            
             var data= await response.json();
             console.log("Data inside Follow function: ",data)
             if (data.Alert){
@@ -110,6 +110,10 @@ export default {
     },
     mounted: async function(){
         console.log("this.other :", this.other)
+        if (this.other==document.cookie.split(";")[0].split("=")[1]){
+            window.location.href = '/myaccount'
+        }
+        
         var url= window.location.href
         var arr= url.split("/")
         this.other= arr[arr.length-1]
@@ -122,7 +126,9 @@ export default {
            
         });
         var data= await response.json();
-        
+        if (data.error){
+            window.location.href = '/home'
+        }
         this.followers= data.followers
         this.following= data.followings
         this.posts= data.posts
@@ -141,6 +147,17 @@ export default {
             document.getElementById("followButton").innerHTML= "Follow"
             document.getElementById("followButton").className= "btn btn-success"
         }
+
+        following_button = document.getElementById("following_button")
+        followers_button = document.getElementById("followers_button")
+        if (this.following.length==0){
+            following_button.disabled = true
+        }
+        if (this.followers.length==0){
+            followers_button.disabled = true
+        }
+
+
     }
 }
 </script>

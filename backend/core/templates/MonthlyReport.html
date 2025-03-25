@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style type="text/css">
+        html{
+            margin-left:25px ;
+        }
+        h2 {
+            color: brown;
+            font-style: italic;
+            margin: 10px;
+            margin-left:55px ;
+        }
+        h3{
+            color: darkcyan;
+            margin:10px;
+            margin-left:65px ;
+        }
+        
+        li{
+            margin-left: 75px;
+        }
+    </style>
+</head>
+<body>
+    
+    <h2> Welcome, {{username}}! Here's the Monthly report for {{month}} </h2>
+        
+    <h3>1. Posts made by you:</h3>
+        {% if post_titles==[]  %}
+            <h4 style="color: red; margin-left: 75px;">None</h4> 
+        {% endif %}
+        <ul>
+        {% for title in  post_titles  %}
+            <li> <h4>{{title}}</h4> </li>
+        {% endfor %}
+        </ul>
+    
+    <h3>2. Comments made by you on other's posts:</h3>
+        {% if comments==[]  %}
+           <h4 style="color: red; margin-left: 75px;">None</h4>
+        {% endif %}
+        <ul>
+        {% for comment in  comments  %}
+                <li>  <h4> You commented " {{comment[0]}} " on <i>{{comment[2]}}'s</i> post on <i>{{comment[1]}}</i></h4>
+        {% endfor %}
+        </ul>
+    <h3>3. List of new followers:</h3>
+       {% if followers==[]  %}
+         <h4 style="color: red; margin-left: 75px;">None</h4> 
+        {% endif %}
+        <ul>
+        {% for follower in  followers  %}
+                <li>  <h4>{{follower}}</h4> </li>
+        {% endfor %}
+        </ul>
+    <h3>4. List of new people you follow:</h3>
+        {% if followings==[]  %}
+            <h4 style="color: red; margin-left: 75px;">None</h4>
+        {% endif %}
+        <ul>
+        {% for following in  followings  %}
+                <li>  <h4>{{following}}</h4></li>
+        {% endfor %}
+        </ul>
+</body>
+</html>
+

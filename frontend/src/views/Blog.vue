@@ -14,11 +14,11 @@
                 <h5 class="modal-title" id="exampleModalLabel">{{ title }}</h5>
                 </div>
                 <div class="modal-body">
-                Are you sure you want to delete this post?
+                Are you sure you want to delete this Blog?
                 </div>
                 <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a type="button" class="btn btn-danger" v-on:click="delete_post"  >Delete Post</a>
+                <a type="button" class="btn btn-danger" v-on:click="delete_blog"  >Delete Blog</a>
                 </div>
             </div>
             </div>
@@ -30,7 +30,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel"> <b> Edit Post </b></h1>
+                <h1 class="modal-title fs-5" id="exampleModalLabel"> <b> Edit Blog </b></h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -40,19 +40,19 @@
                     <input type="text" class="form-control" id="title-text">
                 </div>
                 <div class="mb-3">
-                    <p id="modal_post_id" style="visibility:hidden;"> </p>
+                    <p id="modal_blog_id" style="visibility:hidden;"> </p>
                     <label for="content-text" class="col-form-label">Content</label>
                     <textarea  class="form-control" id="content-text" ></textarea>
                 </div>
                 <div class="mb-3">
-                    <input class="form-control" id="edit_post_image" @change="image_changed" type="file" name="file" placeholder="Upload Image" accept="image/gif, image/jpeg, image/jpg, image/png" >
+                    <input class="form-control" id="edit_blog_image" @change="image_changed" type="file" name="file" placeholder="Upload Image" accept="image/gif, image/jpeg, image/jpg, image/png" >
                     <img id="imageid"  style="margin:10px; max-height:250px;" alt="" >
                 </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success" @click="editPost" >Submit</button>
+                <button type="button" class="btn btn-success" @click="editBlog" >Submit</button>
             </div>
             </div>
             </div>
@@ -60,11 +60,10 @@
         <!-- Modal edit end  -->
 
         <img  v-if="ispic" style="object-fit:cover; height:30px; width:30px; border-radius:100%;" :src="'http://localhost:5000/static/img/propics/'+userid+'.jpg'" alt="">
-                                                                                                    <!-- :src="'http://localhost:5000/static/img/propics/'+comment.userid+'.jpg'" -->
         <img  v-else style="object-fit:cover; height:30px; width:30px; border-radius:100%;" src="http://localhost:5000/static/img/placeholder_propic.png"  alt="">
 
         <span>
-             <a class=" mb-0" :href="'/users/'+ author" style="text-decoration:none; color:black; font-size:20px"> <b>{{author}}</b></a>
+            <a class=" mb-0" :href="'/users/'+ author" style="text-decoration:none; color:black; font-size:20px"> <b>{{author}}</b></a>
         </span> 
 
     </div>
@@ -84,8 +83,8 @@
     <form class="row d-flex" v-on:submit.prevent="addComment(this)">
         <div class="col-auto" style="border:1px black solid; border-radius:10%; margin-bottom:10px; margin-left:20px; text-align:center;" >
         {{likes}} 
-        <span v-if="islike" v-on:click="like_post" class="bi bi-hand-thumbs-up-fill" style="font-size:25px;"></span> 
-        <span v-else v-on:click="like_post" class="bi bi-hand-thumbs-up" style="font-size:25px;"></span>  
+        <span v-if="islike" v-on:click="like_blog" class="bi bi-hand-thumbs-up-fill" style="font-size:25px;"></span> 
+        <span v-else v-on:click="like_blog" class="bi bi-hand-thumbs-up" style="font-size:25px;"></span>  
         </div>
 
     <!-- COMMENT -->
@@ -129,7 +128,7 @@
 
 <script>
 export default {
-    name: 'Post',
+    name: 'Blog',
     props:['postid'],
     data: function () {
         return {
@@ -143,13 +142,13 @@ export default {
             islike: "",
             likes: "",
             commentText: "",
-
+            
             comments:[],
-            username:document.cookie.split(";")[0].split("=")[1],
+            username: document.cookie.split(";")[0].split("=")[1],
             modal_id: ""
         }},
     methods:{
-        like_post:async function(){
+        like_blog:async function(){
             if (this.islike){
                 var response = await fetch('http://localhost:5000/like/' + this.id, {
                     method: 'DELETE',
@@ -230,7 +229,7 @@ export default {
             var data= await response.json();            
             this.comments = this.comments.filter((c)=> c.id!=commentid)
         },
-        delete_post:  async function(){
+        delete_blog:  async function(){
             var response = await fetch('http://localhost:5000/post/' + this.id, {
                 method: 'DELETE',
                 headers: {
@@ -243,14 +242,13 @@ export default {
             var data= await response.json();
             window.location.reload();
         },
-        editPost: async function(){
+        editBlog: async function(){
             console.log("this.modal_id=", this.modal_id)
             const formData = new FormData();
             
             formData.append("title", document.getElementById("title-text").value);
             formData.append("caption", document.getElementById("content-text").value);
-            // formData.append("postid", document.getElementById("modal_post_id").value);
-            formData.append("file", document.getElementById("edit_post_image").files[0]);
+            formData.append("file", document.getElementById("edit_blog_image").files[0]);
             console.log(formData)
 
             var response = await fetch('http://localhost:5000/post/'+ this.postid , {
@@ -265,7 +263,7 @@ export default {
             window.location.reload()
         },
         image_changed: function(){
-            var image_object= document.getElementById("edit_post_image").files[0]
+            var image_object= document.getElementById("edit_blog_image").files[0]
             console.log(image_object)
             if (! image_object){
                 document.getElementById("imageid").src= "";
@@ -277,7 +275,7 @@ export default {
             document.getElementById("imageid").src= 'http://localhost:5000/static/img/posts/'+ this.postid+'.jpg';
             document.getElementById("title-text").value= this.title
             document.getElementById("content-text").value= this.caption
-            document.getElementById("modal_post_id").value= this.id
+            document.getElementById("modal_blog_id").value= this.id
         },
     },
     mounted: async function(){
@@ -298,8 +296,6 @@ export default {
             this.islike = data.islike
             this.likes = data.likes
             this.userid = data.userid
-
-            console.log("this.userid: ", this.userid)
     }
 }
 </script>

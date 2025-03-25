@@ -20,4 +20,3 @@ def send_mail(receiver="yashsrivastava02112000@gmail.com", message="", subject= 
         s.send_message(msg)
         s.quit()
         print("EMAIL SENT")
-

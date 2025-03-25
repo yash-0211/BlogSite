@@ -96,7 +96,7 @@ export default {
             if (data.message == "") {
                 // set cookie and token 
                 localStorage.setItem('access_token', token);
-                document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2025   00:00:00 UTC; path=/'
+                document.cookie = 'username=' + this.username + '; expires=Mon, 1 Jan 2026   00:00:00 UTC; path=/'
                 window.location.href = '/home';
             }
             else if (data.message == "username" || data.message == "email") {

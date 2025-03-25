@@ -37,8 +37,8 @@
     <div class="row gy-4 row-cols-1 row-cols-md-6 row-cols-xl-6 mx-auto d-flex justify-content-between" style="display:inline; margin-bottom:15px;">
         <span class="h3" style="padding:0px;">Total posts: {{posts.length}} </span >
         <span class="dropdown">     
-            <button class="btn btn-secondary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >
-                Followers
+            <button class="btn btn-secondary btn-lg dropdown-toggle" id="followers_button" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >
+                Followers: {{followers.length}}
             </button>
             <div class="dropdown-menu" v-if="followers.length" >
                 <div v-for="follower in followers " :key="follower"  >
@@ -46,13 +46,15 @@
                 </div>
             </div>
         </span>
-        <span class="dropdown">
-            <button class="btn btn-secondary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-left:30px;">
-                Following
+        <span class="dropdown" >
+            <button class="btn btn-secondary btn-lg dropdown-toggle" id="following_button" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-left:30px;">
+                Following: {{following.length}}
             </button>
             <div class="dropdown-menu" v-if="following.length" >
-                <div v-for="person in following" :key="person" >
-                    <a class="dropdown-item" :href="'/users/'+ person" >{{person}}</a>
+                <div class="div" v-if="following.length">
+                    <div v-for="person in following" :key="person" >
+                        <a class="dropdown-item" :href="'/users/'+ person" >{{person}}</a>
+                    </div>
                 </div>
             </div>
         </span>
@@ -62,7 +64,7 @@
 
         </div>
         <div v-for="postid in posts" :key="postid" style="margin-top:30px;"  >
-            <Post :postid="postid"  />
+            <Blog :postid="postid"  />
         </div>
     
 </div></div></div>
@@ -70,10 +72,10 @@
 
 <script>
 
-import Post from './Post.vue'
+import Blog from './Blog.vue'
 export default {
     name:'MyAccount',
-    components: {Post},
+    components: {Blog},
     data: function () {
         return {
             followers: [],
@@ -118,7 +120,7 @@ export default {
             window.location.reload()
             }
     },
- 
+
     mounted: async function(){
         var response = await fetch('http://localhost:5000/myaccount', {
             method: 'GET',
@@ -130,11 +132,19 @@ export default {
         var data= await response.json();
         
         if (!data.Alert){
-        this.followers= data.followers 
-        this.following= data.followings
-        this.posts= data.posts
-        this.userid= data.userid
-        this.ispic= data.ispic
+            this.followers= data.followers 
+            this.following= data.followings
+            this.posts= data.posts
+            this.userid= data.userid
+            this.ispic= data.ispic
+        }
+        following_button = document.getElementById("following_button")
+        followers_button = document.getElementById("followers_button")
+        if (this.following.length==0){
+            following_button.disabled = true
+        }
+        if (this.followers.length==0){
+            followers_button.disabled = true
         }
     }
 }

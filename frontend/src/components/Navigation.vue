@@ -26,10 +26,7 @@
                 <li class="nav-item"> <a id="log" class="nav-link active" v-on:click="log_func" style="margin-left: 0px;padding-right: 0px;margin-right: 15px;">Logout</a></li>
                 <li class="nav-item"> <a class="nav-link active" style="margin-left: 15px;" href='/myaccount'>My Account</a></li>
             </ul>
-            <!-- <span class="navbar-text" style="margin-right: -18px;padding-right: 0px;margin-bottom: -8px;margin-top: -8px;">
-                <img class="rounded-circle flex-shrink-0 me-3" style="object-fit: cover;" width="36" height="36" src="../static/img/Users/{{ img }}.jpg">
-            </span> -->
-            
+
         </div>
     </div>
 </nav>

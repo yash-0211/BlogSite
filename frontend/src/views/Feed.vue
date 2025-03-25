@@ -9,7 +9,7 @@
     </div>
     <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-1">
         <div class="col" v-for="postid in posts" :key="postid" >
-            <Post :postid="postid"  />
+            <Blog :postid="postid"  />
         </div>
     </div>
     <span v-if="more" v-on:click="LoadMorePosts()" class="bi bi-chevron-double-down" style="font-size:25px;">Show more Posts</span> 
@@ -20,10 +20,10 @@
 </template>
 
 <script>
-import Post from './Post.vue'
+import Blog from './Blog.vue'
 export default {
     name: 'Feed',
-    components: {Post},
+    components: {Blog},
     props: ["child_username",],
     data: function () {
         return {
