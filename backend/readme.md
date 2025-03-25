@@ -2,7 +2,6 @@
 Please install the below technologies on your linux machine ( or WSL) before running the project:  
 * Python
 * Redis  
-* MailHog  
 * PostgresQL
 
 
